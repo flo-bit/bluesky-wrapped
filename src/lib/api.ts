@@ -71,6 +71,41 @@ export async function getFollowsOfActor({
 	return { follows: allFollows, cursor }
 }
 
+export async function getFollowersOfActor({
+	actor,
+	cursor,
+	limit = 10,
+	agent = undefined
+}: {
+	actor: string;
+	cursor?: string;
+	limit?: number;
+	agent?: AgentType;
+}) {
+	const allFollowers: ProfileView[] = [];
+	if (!agent) {
+		agent = new AtpBaseClient({ service: 'https://api.bsky.app' });
+	}
+
+	const perLimit = limit > 100 ? 100 : limit;
+	do {
+		let follows;
+		if (agent instanceof AtpBaseClient) {
+			follows = await agent.app.bsky.graph.getFollowers({
+				actor,
+				limit: perLimit,
+				cursor
+			});
+		} else {
+			follows = await agent.getFollowers({ actor, limit: perLimit, cursor });
+		}
+
+		allFollowers.push(...follows.data.followers);
+		cursor = follows.data.cursor;
+	} while (cursor && allFollowers.length < limit);
+	return { follows: allFollowers, cursor };
+}
+
 export async function getPostsOfUser({
 	actor,
 	agent = undefined,

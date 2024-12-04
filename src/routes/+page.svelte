@@ -1,19 +1,24 @@
 <script lang="ts">
-	import { getProfile, resolveHandle } from '$lib/api';
-	import type { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs';
+	import { getFollowersOfActor, getProfile, resolveHandle } from '$lib/api';
+	import type { ProfileView, ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs';
 	import Presentation from './Presentation.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import Button from '$lib/components/Button.svelte';
+	import BeeswarmFollowers from '$lib/components/BeeswarmFollowers.svelte';
+	import { onMount } from 'svelte';
 
 	let handle = $state('');
 
 	let showPresentation = $state(false);
 
-	let user: ProfileViewDetailed | null = $state(null);
-
 	let error: string | null = $state(null);
 
 	let loading = $state(false);
+
+	let data: {
+		user: ProfileViewDetailed;
+		followers: ProfileView[];
+	} | null = $state(null);
 
 	async function loadData() {
 		loading = true;
@@ -22,11 +27,23 @@
 			error = 'Invalid handle';
 			return;
 		}
-		user = await getProfile({ did });
-		console.log(user);
+		const followersPromise = getFollowersOfActor({ actor: did, limit: 1000 });
+		const userPromise = getProfile({ did });
 
+		const [loadedFollowers, loadedUser] = await Promise.all([followersPromise, userPromise]);
+
+		data = {
+			user: loadedUser,
+			followers: loadedFollowers.follows
+		};
+		console.log(data);
 		showPresentation = true;
 	}
+
+	onMount(() => {
+		// handle = 'flo-bit.dev';
+		// loadData();
+	});
 </script>
 
 {#if !showPresentation}
@@ -46,6 +63,6 @@
 			>
 		</div>
 	</div>
-{:else if user}
-	<Presentation {user} />
+{:else if data}
+	<Presentation {data} />
 {/if}
