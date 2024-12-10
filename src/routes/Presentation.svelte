@@ -4,17 +4,17 @@
 	import { tween } from '@animotion/motion';
 	import BeeswarmFollowers from '$lib/components/BeeswarmFollowers.svelte';
 	import FollowerSlide from './FollowerSlide.svelte';
+	import type { APIProfile } from '$lib/transform';
 
 	let text: HTMLParagraphElement;
 
-	let { data }: { data: {
-		user: ProfileViewDetailed;
-		followers: ProfileView[];
-	} } = $props();
+	let { data }: { data: APIProfile } = $props();
 
 	let followerCount = tween(0);
 
 	let followsCount = tween(0);
+
+	$inspect(data);
 </script>
 
 <Presentation
@@ -28,8 +28,6 @@
 		</div>
 		<p bind:this={text} class="text-accent-500 mt-10 text-3xl font-bold">Your year on bluesky</p>
 	</Slide>
-
-	<FollowerSlide data={data} />
 
 	<Slide
 		class="h-full max-w-screen place-content-center place-items-center"

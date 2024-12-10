@@ -1,11 +1,23 @@
 <script lang="ts">
-	import { getFollowersOfActor, getProfile, resolveHandle } from '$lib/api';
-	import type { ProfileView, ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs';
+	import {
+		getAuthorFeedWithLikes,
+		getDidDocument,
+		getFollowersOfActor,
+		getProfile,
+		resolveHandle
+	} from '$lib/api';
+	import type {
+		ProfileView,
+		ProfileViewDetailed
+	} from '@atproto/api/dist/client/types/app/bsky/actor/defs';
 	import Presentation from './Presentation.svelte';
 	import Input from '$lib/components/Input.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import BeeswarmFollowers from '$lib/components/BeeswarmFollowers.svelte';
 	import { onMount } from 'svelte';
+	import type { FeedViewPost } from '@atproto/api/dist/client/types/app/bsky/feed/defs';
+	import type { Like } from '@atproto/api/dist/client/types/app/bsky/feed/getLikes';
+	import { transformData, type APIProfile } from '$lib/transform';
 
 	let handle = $state('');
 
@@ -15,10 +27,7 @@
 
 	let loading = $state(false);
 
-	let data: {
-		user: ProfileViewDetailed;
-		followers: ProfileView[];
-	} | null = $state(null);
+	let data: APIProfile | null = $state(null);
 
 	async function loadData() {
 		loading = true;
@@ -27,22 +36,46 @@
 			error = 'Invalid handle';
 			return;
 		}
+
 		const followersPromise = getFollowersOfActor({ actor: did, limit: 1000 });
 		const userPromise = getProfile({ did });
 
-		const [loadedFollowers, loadedUser] = await Promise.all([followersPromise, userPromise]);
+		const authorFeedPromise = getAuthorFeedWithLikes({ actor: did, limit: 1000 });
+
+		const didInfoPromise = getDidDocument({ did });
+
+		const [loadedFollowers, loadedUser, authorFeed, didInfo] = await Promise.all([
+			followersPromise,
+			userPromise,
+			authorFeedPromise,
+			didInfoPromise
+		]);
 
 		data = {
 			user: loadedUser,
-			followers: loadedFollowers.follows
+			followers: loadedFollowers.follows,
+			authorFeed: authorFeed.feed,
+			didInfo
 		};
 		console.log(data);
+
+		// save data to local storage
+		localStorage.setItem('data', JSON.stringify(data));
+
 		showPresentation = true;
 	}
 
-	onMount(() => {
+	onMount(async () => {
 		// handle = 'flo-bit.dev';
 		// loadData();
+
+		// get data from local storage
+		data = JSON.parse(localStorage.getItem('data') || '{}');
+		console.log(data);
+		if (data) {
+			showPresentation = true;
+			console.log(transformData(data));
+		}
 	});
 </script>
 
