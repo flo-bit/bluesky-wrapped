@@ -292,3 +292,5 @@ export function transformData(data: APIProfile) {
 		...data
 	};
 }
+
+export type TransformedData = ReturnType<typeof transformData>;

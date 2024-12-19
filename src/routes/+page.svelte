@@ -22,6 +22,8 @@
 
 	let data: TransformedData | null = $state(null);
 
+	let users: { handle: string; timestamp: number }[] = $state([]);
+
 	async function loadData() {
 		loading = true;
 		let did = await resolveHandle({ handle });
@@ -63,13 +65,22 @@
 		showPresentation = true;
 	}
 
+	function showPresentationForUser(handle: string) {
+		data = JSON.parse(localStorage.getItem('data-' + handle) || '{}');
+		showPresentation = true;
+	}
+
 	onMount(async () => {
+		let version = localStorage.getItem('version') || '0';
+		if (version !== '1') {
+			localStorage.clear();
+			localStorage.setItem('version', '1');
+		}
 		// handle = 'flo-bit.dev';
 		// loadData();
 
 		// get data from local storage
-		let users = JSON.parse(localStorage.getItem('users') || '[]');
-		console.log(users);
+		users = JSON.parse(localStorage.getItem('users') || '[]');
 		if (users.length > 0) {
 			let user = users[0];
 			data = JSON.parse(localStorage.getItem('data-' + user.handle) || '{}');
@@ -82,9 +93,9 @@
 </script>
 
 {#if !showPresentation}
-	<div class="bg-base-900 flex h-screen w-full items-center justify-center">
+	<div class="flex h-screen w-full flex-col items-center justify-center">
 		<div class="flex w-full max-w-md flex-col gap-4 px-4">
-			<div class="text-base-50 text-2xl font-bold">Enter your handle:</div>
+			<div class="text-base-900 dark:text-base-50 text-2xl font-bold">Enter your handle:</div>
 			<Input
 				type="text"
 				id="handle"
@@ -93,11 +104,36 @@
 				bind:value={handle}
 			/>
 
-			<Button onclick={loadData} disabled={loading}
+			<Button onclick={loadData} disabled={loading || !handle}
 				>{loading ? 'Loading...' : 'Show Presentation'}</Button
 			>
 		</div>
+
+		{#if users.length > 0}
+			<div class="mt-16 flex w-full max-w-md flex-col gap-4 px-4">
+				<div class="text-base-900 dark:text-base-50 text-2xl font-bold">
+					generated presentations:
+				</div>
+				<div class="flex flex-col gap-2">
+					{#each users as user}
+						<button
+							onclick={() => showPresentationForUser(user.handle)}
+							class="text-base-900 dark:text-base-50 dark:bg-base-800 bg-base-50 border-base-700 cursor-pointer rounded-full border p-2"
+							>{user.handle}</button
+						>
+					{/each}
+				</div>
+			</div>
+		{/if}
 	</div>
 {:else if data}
 	<Presentation {data} />
 {/if}
+
+<div class="bg-base-900 fixed inset-0 -z-10 h-full w-full">
+	<img
+		src="/bluesky-wrapped/background.png"
+		class="h-full w-full object-cover dark:opacity-10"
+		alt=""
+	/>
+</div>

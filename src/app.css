@@ -46,3 +46,38 @@
 	--color-base-900: var(--color-stone-900);
 	--color-base-950: var(--color-stone-950);
 }
+
+
+
+/* view transitions */
+/* html {
+	view-transition-name: none;
+}
+
+::view-transition-group(*) {
+	animation-duration: 0.6s;
+	animation-timing-function: var(--ease);
+}
+
+.enter {
+	animation: enter 0.6s var(--ease);
+}
+
+.rotate {
+	animation: rotate 0.6s var(--ease);
+}
+
+@keyframes enter {
+	from {
+		filter: blur(40px);
+		scale: 0;
+	}
+}
+
+@keyframes rotate {
+	from {
+		filter: blur(4px);
+		scale: 2;
+		rotate: -1turn;
+	}
+} */
